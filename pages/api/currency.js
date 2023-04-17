@@ -4,6 +4,7 @@ const axios = require("axios");
 export default async function handler(req, res) {
   try {
     const question = req.query.question?.toLowerCase() || "";
+    console.log(question);
     if (!question) {
       res.status(200).send("");
     }
@@ -20,13 +21,9 @@ export default async function handler(req, res) {
         .replace(/\d*/, "")}.json`
     );
 
-    if (!answers.ok) {
-      res.status(400).send("");
-    }
-
     res.setHeader("Cache-Control", "s-maxage=86400, stale-while-revalidate");
     res.status(200).send(answers.data?.pkr);
   } catch (e) {
-    res.status(200).send("")
+    res.status(200).send("");
   }
 }
