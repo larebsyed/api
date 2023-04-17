@@ -1,29 +1,24 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-const axios = require("axios");
-
 export const config = {
   runtime: "edge",
 };
 
-export default async function handler(req, res) {
-  console.log(req.query.question);
-  const suggestions = await axios.get(
-    `https://www.google.com/complete/search?client=firefox&q=${req.query.question}`
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url);
+  const question = searchParams.get("question");
+  const suggestResponse = await fetch(
+    `https://www.google.com/complete/search?client=firefox&q=${question}`
+  );
+  const suggestions = await suggestResponse.json();
+  const answerResponse = await fetch(
+    `${process.env.ANSWER_URI}/api/answer?question=${question}`
   );
 
-  const answers  = await axios.get(
-    `https://api-playground-pink.vercel.app/api/answer?question=${req.query.question}`
-  );
-
-  console.log(suggestions.data);
-
-  if (answers.data)
-    suggestions.data[1] = [
-      `${req.query.question} = ${answers?.data}`,
-      ...suggestions.data[1],
-    ];
-
-  return new Response(JSON.stringify(suggestions.data), {
+  const answer = await answerResponse.text();
+  if (answer) {
+    suggestions[1] = [`${question} = ${answer}`, ...suggestions[1]];
+  }
+  return new Response(JSON.stringify(suggestions), {
     status: 200,
     headers: {
       "content-type": "application/json",
